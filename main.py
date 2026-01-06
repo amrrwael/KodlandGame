@@ -11,10 +11,12 @@ BulletSpeed = 10
 EnemySpeed = 1
 BossSpeed = 0.5
 BossSpawnTime = 10  #In Seconds
+WinningScore = 500 # Change the diffculity by increasing the number
 
 Menu = 0
 Playing = 1
 GameOver = 2
+GameWin = 3
 
 MusicOn = True
 SoundOn = True
@@ -265,6 +267,11 @@ def set_music_volume(volume):
         pass
 
 def draw():
+    ProgressWidth = 200
+    ProgressHeight = 15
+    ProgressX = WIDTH - ProgressWidth - 10
+    ProgressY = 45
+    progress = min(1.0, score / WinningScore)
     screen.fill((18, 12, 36))  
 
     if GameState == Menu:
@@ -285,16 +292,27 @@ def draw():
             coin.draw()
         screen.draw.text(f"Score: {score}", (10, 10), fontsize=30, color=(102, 255, 255))
         screen.draw.text(f"Health: {PlayerHealth}", (10, 40), fontsize=30, color=(255, 165, 0))
+        screen.draw.text(f"Target: {WinningScore}", (WIDTH - 200, 10), fontsize=30, color=(255, 215, 0))
+        screen.draw.filled_rect(Rect(ProgressX, ProgressY, ProgressWidth, ProgressHeight), (50, 50, 50))
+        screen.draw.filled_rect(Rect(ProgressX, ProgressY, int(ProgressWidth * progress), ProgressHeight), (0, 255, 0))
+        screen.draw.rect(Rect(ProgressX, ProgressY, ProgressWidth, ProgressHeight), (200, 200, 200))
         screen.draw.line((mouse_x - 10, mouse_y), (mouse_x + 10, mouse_y), (57, 255, 20))
         screen.draw.line((mouse_x, mouse_y - 10), (mouse_x, mouse_y + 10), (57, 255, 20))
     elif GameState == GameOver:
         screen.draw.text("GAME OVER", (WIDTH//2 - 120, HEIGHT//2 - 50), fontsize=60, color=(255, 50, 50))
         screen.draw.text(f"Final Score: {score}", (WIDTH//2 - 90, HEIGHT//2 + 10), fontsize=40, color=(255, 220, 180))
         screen.draw.text("Press SPACE to return to Menu", (WIDTH//2 - 180, HEIGHT//2 + 60), fontsize=30, color=(180, 255, 255))
-
+    elif GameState == GameWin:
+        screen.draw.text("VICTORY!", (WIDTH//2 - 100, HEIGHT//2 - 80), fontsize=70, color=(255, 215, 0))
+        screen.draw.text("YOU WIN!", (WIDTH//2 - 90, HEIGHT//2 - 10), fontsize=60, color=(50, 255, 100))
+        screen.draw.text(f"Final Score: {score}", (WIDTH//2 - 90, HEIGHT//2 + 50), fontsize=40, color=(255, 220, 180))
+        screen.draw.text("Press SPACE to return to Menu", (WIDTH//2 - 180, HEIGHT//2 + 100), fontsize=30, color=(180, 255, 255))
 
 def update():
     global GameState, PlayerHealth, score, boss, BossSpawnTimer
+
+    if GameState == GameWin or GameState == GameOver:
+        return
 
     if GameState != Playing:
         return
@@ -377,11 +395,14 @@ def update():
         if i < len(coins):
             del coins[i]
             score += 10
+    if score >= WinningScore:
+        GameState = GameWin
+        stop_music()
 
 def on_key_down(key):
     global GameState, PlayerHealth, score, boss, BossSpawnTimer
     # Reset Game
-    if GameState == GameOver and key == keys.SPACE:
+    if (GameState == GameOver or GameState == GameWin) and key == keys.SPACE:
         player.x = WIDTH // 2
         player.y = HEIGHT // 2
         PlayerHealth = 100
